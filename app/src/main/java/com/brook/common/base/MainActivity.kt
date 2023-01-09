@@ -1,7 +1,10 @@
 package com.brook.common.base
 
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.brook.common.base.databinding.ActivityMainBinding
 import com.brook.common.base.databinding.ItemCountBinding
@@ -16,37 +19,45 @@ class MainActivity : AppCompatActivity() {
         setContentView(mBinding.root)
         mBinding.list.layoutManager = LinearLayoutManager(this)
         mBinding.list.adapter = adapter
-        val dataList = mutableListOf<Int>()
-        var i = 0
-        while (i++ < 20) {
-            dataList.add(i)
-        }
-
-        adapter.setTotalCount(100)
+        val dataList = listOf("加载更多")
         adapter.setDataList(dataList)
-        adapter.setOnLoadMoreListener(object : BrookRecyclerAdapter.OnLoadMoreListener {
-            override fun onLoadMore() {
-                val dataList = mutableListOf<Int>()
-                var i = adapter.itemCount - 1
-                while (i++ < 20 + adapter.itemCount - 1) {
-                    dataList.add(i)
-                }
-                adapter.addDataList(dataList)
-            }
-
-        })
+        supportFragmentManager.addOnBackStackChangedListener {
+            mBinding.list.isVisible = supportFragmentManager.backStackEntryCount == 0
+        }
     }
 
     private val adapter =
-        object : BrookRecyclerAdapter<Int, ItemCountBinding>(ItemCountBinding::class.java) {
+        object : BrookRecyclerAdapter<String, ItemCountBinding>(ItemCountBinding::class.java) {
             override fun onBindViewHolder(
                 holder: BrookViewHolder,
                 binding: ItemCountBinding,
                 position: Int,
-                data: Int
+                data: String
             ) {
-                binding.text.text = data.toString()
+                binding.text.text = data
+            }
+
+            override fun onItemClick(position: Int, itemView: View) {
+                when (position) {
+                    0 -> {
+                        showFragment(LoadMoreFragment())
+                    }
+                    else -> {}
+                }
             }
 
         }
+
+    private fun showFragment(fragment: Fragment) {
+        supportFragmentManager.beginTransaction().add(R.id.container, fragment, "加载更多")
+            .addToBackStack(null).commit()
+    }
+
+    override fun onBackPressed() {
+        if (supportFragmentManager.backStackEntryCount > 0) {
+            supportFragmentManager.popBackStack()
+        } else {
+            super.onBackPressed()
+        }
+    }
 }
